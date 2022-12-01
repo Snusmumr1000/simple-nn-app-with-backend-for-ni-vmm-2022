@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 
 import uvicorn as uvicorn
 from fastapi import FastAPI, File, Depends
@@ -15,6 +16,7 @@ from src.persistence import STORAGE
 from src.schemas import ImageInfo, ImageInfoOutDTO
 
 app = FastAPI()
+Path("static/images").mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # CORS
