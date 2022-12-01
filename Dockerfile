@@ -8,7 +8,6 @@ COPY . ./
 
 ENV PORT 8000
 
-RUN python --version
 RUN pip install --no-cache-dir -r requirements.txt
 
 # As an example here we're running the web service with one worker on uvicorn.
