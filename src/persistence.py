@@ -9,7 +9,8 @@ STORAGE: dict[str, ImageInfo] = {}
 
 
 def load_images_to_storage():
-    image_paths = list(Path("../static/images").glob('*'))
+    image_paths = list(Path("static/images").glob('*'))
+    print(image_paths)
     for path in image_paths:
         h = path.stem
         if path.suffix != ".jpg":
@@ -17,6 +18,9 @@ def load_images_to_storage():
         image = Image.open(path)
         image_info = ImageInfo(image.tobytes(), image_feature_extractor.instance.extract(image).tolist(), h)
         STORAGE[h] = image_info
+
+
+image_feature_extractor.instance.recalculate_action = load_images_to_storage
 
 
 load_images_to_storage()

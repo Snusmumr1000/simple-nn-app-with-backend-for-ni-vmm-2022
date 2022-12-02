@@ -12,11 +12,10 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
 import src.image_feature_extractor as image_feature_extractor
-from src.persistence import STORAGE
+from src.persistence import STORAGE, load_images_to_storage
 from src.schemas import ImageInfo, ImageInfoOutDTO
 
 app = FastAPI()
-Path("static/images").mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # CORS
@@ -33,16 +32,7 @@ app.add_middleware(
 )
 
 
-@app.post("/")
-async def calculate_image_vector(
-        file: bytes = File(),
-        extractor: image_feature_extractor.ImageFeatureExtractor = Depends(image_feature_extractor.dependency),
-):
-    image = Image.open(BytesIO(file))
-    return {"image_vector": extractor.extract(image).tolist()}
-
-
-@app.post("/images")
+@app.post("/images", tags=["images"])
 async def create_image_vector(
         file: bytes = File(),
         extractor: image_feature_extractor.ImageFeatureExtractor = Depends(image_feature_extractor.dependency),
@@ -55,12 +45,12 @@ async def create_image_vector(
         STORAGE[h] = image_info
 
 
-@app.get("/images")
+@app.get("/images", tags=["images"])
 async def get_image_ids():
     return [*map(ImageInfoOutDTO.from_image_info, STORAGE.values())]
 
 
-@app.get("/images/{h}/comparison")
+@app.get("/images/{h}/comparison", tags=["images"])
 async def get_image_comparison(
         h: str,
         extractor: image_feature_extractor.ImageFeatureExtractor = Depends(image_feature_extractor.dependency),
@@ -72,6 +62,37 @@ async def get_image_comparison(
 
     sim_matrix = extractor.compare(image_vector, other_feature_vectors)
     return {i.h: p for i, p in zip(other_images_info, sim_matrix.tolist())}
+
+
+@app.put("/current_model/{model_name}", tags=["current_model"])
+async def change_nn_model(
+        model_name: str,
+        extractor: image_feature_extractor.ImageFeatureExtractor = Depends(image_feature_extractor.dependency),
+):
+    if model_name not in extractor.model_names:
+        raise ValueError(f"Model name must be one of {extractor.model_names}")
+
+    if model_name == extractor.model_name:
+        return {"message": "Model already set to this value"}
+
+    extractor.set_model(model_name)
+    load_images_to_storage()
+    return {"message": "Model changed"}
+
+
+@app.get("/current_model", tags=["current_model"])
+async def get_current_model(
+        extractor: image_feature_extractor.ImageFeatureExtractor = Depends(image_feature_extractor.dependency),
+):
+    return {"model": extractor.model_name}
+
+
+@app.get("/models", tags=["models"])
+async def get_models(
+        extractor: image_feature_extractor.ImageFeatureExtractor = Depends(image_feature_extractor.dependency),
+):
+    return {"models": extractor.model_names}
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
