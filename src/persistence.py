@@ -10,7 +10,7 @@ STORAGE: dict[str, ImageInfo] = {}
 
 def load_images_to_storage():
     image_paths = list(Path("static/images").glob('*'))
-    print(image_paths)
+
     for path in image_paths:
         h = path.stem
         if path.suffix != ".jpg":

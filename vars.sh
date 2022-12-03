@@ -4,3 +4,4 @@ APP=ni-vmm-2022-backend
 PORT=8000
 REGION="us-central1"
 TAG="gcr.io/$PROJECT_ID/$APP"
+PWD=$(pwd)

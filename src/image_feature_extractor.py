@@ -19,8 +19,17 @@ class ImageFeatureExtractor:
         self._torchvision_model = importlib.import_module("torchvision.models").__dict__
         _weights_postfix = "_Weights"
         _weight_keys = [e for e in self._torchvision_model.keys() if e.endswith(_weights_postfix)]
-        self.model_names = [e[:-len(_weights_postfix)].lower() for e in _weight_keys]
+        self.model_names = [
+            e if 'resnet' in e
+            or 'regnet' in e
+            or 'efficientnet' in e
+            else None
+            for e in [e[:-len(_weights_postfix)].lower() for e in _weight_keys]
+        ]
         self._model2weights = {k: v for k, v in zip(self.model_names, _weight_keys)}
+
+        self.model_names = [e for e in self.model_names if e is not None]
+        del self._model2weights[None]
 
     def _set_model(self, model_name="resnet50"):
         self.model_name = model_name
