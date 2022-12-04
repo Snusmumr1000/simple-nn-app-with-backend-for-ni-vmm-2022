@@ -8,6 +8,7 @@ from PIL import Image
 
 
 # https://pytorch.org/vision/stable/models.html#table-of-all-available-classification-weights
+from fastapi_utils.timing import add_timing_middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
@@ -15,8 +16,15 @@ import src.image_feature_extractor as image_feature_extractor
 from src.persistence import STORAGE, load_images_to_storage
 from src.schemas import ImageInfo, ImageInfoOutDTO
 
+import logging
+
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+add_timing_middleware(app, record=logger.info, prefix="app", exclude="untimed")
 
 # CORS
 origins = [
